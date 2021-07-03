@@ -33,6 +33,7 @@ app.post("/audioUpload", upload.any(), (req, res) => {
     console.log("Received new upload request, analyzing...")
     var remotePath = req.body.type
     if (!remotePath) {
+        console.log("Type param was empty, sending error 500")
         res.status(500).send();
         res.end();
         return
@@ -41,6 +42,7 @@ app.post("/audioUpload", upload.any(), (req, res) => {
     if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
     filePath += "/" + req.body.filename
     if (fs.existsSync(filePath)) { fs.unlinkSync(filePath) }
+    console.log("File at path " + filePath + " has been deleted")
 
     if (req.files[0]) {
         console.log("Buffer found. Trying on saving it...")
