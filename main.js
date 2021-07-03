@@ -56,7 +56,16 @@ app.post("/audioUpload", upload.any(), (req, res) => {
 })
 
 app.get("/audioDownload", (req, res) => {
-    var filePath = PATH.format(req.query.key)
+    console.log(req.query)
+    var remotePath = req.query.type
+    if (!remotePath) {
+        res.status(500).send();
+        res.end();
+        return
+    }
+    var filePath = PATH.format(remotePath)
+    filePath += "/" + req.query.key
+
     if (fs.existsSync(filePath)) {
         fs.readFile(filePath, (err, data) => {
             if (err) return console.err(err)
