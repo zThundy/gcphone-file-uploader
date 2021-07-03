@@ -33,12 +33,22 @@ app.use(bodyParser.urlencoded({
 }));
 
 app.post("/audioUpload", upload.any(), (req, res) => {
-    var filePath = PATH.format(req.body.filename)
+    var remotePath = req.body.type
+    if (!remotePath) {
+        res.status(500).send();
+        res.end();
+        return
+    }
+    var filePath = PATH.format(remotePath)
+    if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
+    filePath += "/" + req.body.filename
     if (fs.existsSync(filePath)) { fs.unlinkSync(filePath) }
 
     if (req.files[0]) {
         var file = req.files[0].buffer
-        fs.writeFileSync(filePath, file);
+        fs.writeFile(filePath, file, (err) => {
+            if (err) throw err;
+        })
     }
     
     res.status(200).send();
