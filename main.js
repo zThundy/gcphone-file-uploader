@@ -48,7 +48,7 @@ app.post("/audioUpload", upload.any(), (req, res) => {
         console.log("Buffer found. Trying on saving it...")
         var file = req.files[0].buffer
         fs.writeFile(filePath, file, (err) => {
-            if (err) throw err;
+            if (err) return console.err(err)
             console.log("File saved successfully! New key: " + req.body.filename)
         })
         res.status(200).send();
@@ -89,5 +89,5 @@ app.get("/", (req, res) => {
 })
 
 app.listen(PORT, () => {
-    console.log("started listening on port", PORT)
+    console.log("Started listening on port", PORT)
 })
