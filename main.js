@@ -56,7 +56,6 @@ app.post("/audioUpload", upload.any(), (req, res) => {
 })
 
 app.get("/audioDownload", (req, res) => {
-    console.log(req.query)
     var remotePath = req.query.type
     if (!remotePath) {
         res.status(500).send();
