@@ -43,19 +43,19 @@ app.post("/audioUpload", upload.any(), (req, res) => {
     if (fs.existsSync(filePath)) { fs.unlinkSync(filePath) }
 
     if (req.files[0]) {
+        console.log("Buffer found. Trying on saving it...")
         var file = req.files[0].buffer
         fs.writeFile(filePath, file, (err) => {
             if (err) throw err;
             console.log("File saved successfully! New key: " + req.body.filename)
         })
+        res.status(200).send();
+        res.end();
     } else {
         console.log("No file nor buffer where sent. Rejecting request")
         res.status(500).send();
         res.end();
     }
-    
-    res.status(200).send();
-    res.end();
 })
 
 app.get("/audioDownload", (req, res) => {
