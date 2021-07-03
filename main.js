@@ -6,7 +6,6 @@ const upload = multer();
 
 const app = express()
 const PORT = 3000
-const REMOTE_PORT = 8080
 var PATH = "./audios/{0}"
 
 if (!String.prototype.format) {
@@ -28,11 +27,10 @@ app.use((req, res, next) => {
     next();
 });
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post("/audioUpload", upload.any(), (req, res) => {
+    console.log("Received new upload request, analyzing...")
     var remotePath = req.body.type
     if (!remotePath) {
         res.status(500).send();
@@ -48,7 +46,12 @@ app.post("/audioUpload", upload.any(), (req, res) => {
         var file = req.files[0].buffer
         fs.writeFile(filePath, file, (err) => {
             if (err) throw err;
+            console.log("File saved successfully! New key: " + req.body.filename)
         })
+    } else {
+        console.log("No file nor buffer where sent. Rejecting request")
+        res.status(500).send();
+        res.end();
     }
     
     res.status(200).send();
@@ -68,11 +71,13 @@ app.get("/audioDownload", (req, res) => {
     if (fs.existsSync(filePath)) {
         fs.readFile(filePath, (err, data) => {
             if (err) return console.err(err)
+            console.log('Found audio file! Sending to client')
             res.setHeader('Content-Type', 'audio/ogg;codec=opus');
             res.write(data, 'binary');
             res.end();
         })
     } else {
+        console.log('No file exists, sending 404')
         res.status(404).send()
     }
 })
