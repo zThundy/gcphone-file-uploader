@@ -40,6 +40,10 @@ app.post("/audioUpload", upload.any(), (req, res) => {
     }
     var filePath = PATH.format(remotePath)
     if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
+    if (remotePath === "voicemails_messages") {
+        filePath += "/" + req.body.voicemail_target
+        if (!fs.existsSync(filePath)) { fs.mkdirSync(filePath) }
+    }
     filePath += "/" + req.body.filename
     if (fs.existsSync(filePath)) { fs.unlinkSync(filePath) }
     console.log("File at path " + filePath + " has been deleted")
