@@ -29,6 +29,8 @@ app.use((req, res, next) => {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Gestione Segreterie
+
 app.post("/audioUpload", upload.any(), (req, res) => {
     console.log("Received new upload request, analyzing...")
     var remotePath = req.body.type
@@ -42,7 +44,7 @@ app.post("/audioUpload", upload.any(), (req, res) => {
     if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
     if (remotePath === "voicemails_messages") {
         filePath += "/" + req.body.voicemail_target
-        if (!fs.existsSync(filePath)) { fs.mkdirSync(filePath) }
+        if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
     }
     filePath += "/" + req.body.filename
     if (fs.existsSync(filePath)) { fs.unlinkSync(filePath) }
@@ -78,8 +80,7 @@ app.get("/audioDownload", (req, res) => {
         fs.readFile(filePath, (err, data) => {
             if (err) return console.err(err)
             console.log('Found audio file! Sending to client')
-            res.setHeader('Content-Type', 'audio/ogg;codec=opus');
-            res.write(data, 'binary');
+            res.json({"blobDataBuffer": data.toString('base64')});
             res.end();
         })
     } else {
@@ -87,6 +88,136 @@ app.get("/audioDownload", (req, res) => {
         res.status(404).send()
     }
 })
+
+// Gestione Messaggi in Segreteria
+
+app.post("/recordedMessageUpload", upload.any(), (req, res) => {
+    console.log("Received new recoreded message upload request, analyzing...")
+    var remotePath = req.body.voicemail_target
+    if (!remotePath) {
+        console.log("Type param target was empty, sending error 500")
+        res.status(500).send();
+        res.end();
+        return
+    }
+    var filePath = PATH.format('voicemails_messages')
+    if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
+    filePath += "/" + req.body.voicemail_target
+    if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
+
+    fs.readdir(filePath, (err, files) => {
+        filePath += "/" + files.length + "_" + req.body.voicemail_source
+        if (req.files[0]) {
+            console.log("Buffer found. Trying on saving it...")
+            var file = req.files[0].buffer
+            fs.writeFile(filePath, file, (err) => {
+                if (err) { return console.log(err) }
+                console.log("File saved successfully! New key: " + files.length + "_" + req.body.voicemail_source)
+            })
+            res.status(200).send();
+            res.end();
+        } else {
+            console.log("No file nor buffer where sent. Rejecting request")
+            res.status(500).send();
+            res.end();
+        }
+    });
+})
+
+app.get("/getAvailabledRecordedMessages", (req, res) => {
+    var remotePath = req.query.target
+    if (!remotePath) {
+        res.status(500).send();
+        res.end();
+        return
+    }
+    var filePath = PATH.format("voicemails_messages/" + remotePath)
+    console.log('filePath', filePath)
+    if (!fs.existsSync(filePath)){ res.status(404).send(); return }
+
+    fs.readdir(filePath, (err, files) => {
+        var recordedMessages = []
+        
+        var cbCalls = 0;
+        let cb = function() {
+            if (++cbCalls == files.length) {
+                recordedMessages.sort(function(a, b) {
+                    return a.id - b.id; });
+                if (recordedMessages.length > 0) {
+                    res.json(recordedMessages);
+                    res.end();
+                    console.log('Sent recorded messages')
+                } else {
+                    console.log('No file exists, sending 404')
+                    res.status(404).send()
+                }
+            }
+        }
+
+        files.forEach((file) => {
+            fs.readFile((filePath + '/' + file), (err, data) => {
+                if (err) return console.log(err)
+                recordedMessages.push({"id": Number(file.substring(0, file.indexOf('_'))), "sourceNumber": file.substring(2, file.length) , "blobDataBuffer": data.toString('base64')})
+                cb()
+            });
+        })
+    });
+    
+})
+
+app.post("/recordedMessageDelete", upload.any(), (req, res) => {
+    console.log("Received new recoreded message delete request, analyzing...", req.body)
+    var filePath = PATH.format("voicemails_messages")
+    if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
+    filePath += '/' + req.body.voicemail_target
+    if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
+
+    fs.readdir(filePath, (err, files) => {
+        files.forEach(file => {
+            if (file.startsWith(req.body.index + '_') || req.body.index == 'all') {
+                fs.unlinkSync(filePath + "/" + file)
+                files = removeElementAtIndex(files, files.indexOf(file))
+            }
+        })
+
+        var cbCalls = 0;
+        let cb = function() {
+            if (++cbCalls == files.length) {
+                files.forEach(file => {
+                    var oldPath = filePath + "/" + file;
+                    var newPath = filePath + "/" + file.substring(14, file.length);
+                    console.log('Renamed file', file, 'with new path: ' + newPath);
+                    fs.rename(oldPath, newPath, (err) => {
+                        if (err) throw err;
+                    })
+                })
+            }
+        }
+
+        var count = 0
+        files.forEach(file => {
+            var newPath = 'FIXING_INDEXES' + count + file.substring(file.indexOf('_'), file.length);
+            files[files.indexOf(file)] = newPath
+            fs.rename(filePath + "/" + file, filePath + "/" + newPath, (err) => {})
+            count++
+            cb()
+        })
+
+        res.status(200).send();
+        res.end();
+    });
+})
+
+function removeElementAtIndex(array, index) {
+    tempArray = []
+    array.forEach((elem) => {
+        if (array.indexOf(elem) != index) {
+            tempArray.push(elem)
+        }
+    })
+
+    return tempArray
+}
 
 app.get("/", (req, res) => {
     res.json("Everything works!")
