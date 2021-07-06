@@ -136,6 +136,8 @@ app.get("/getAvailabledRecordedMessages", (req, res) => {
     if (!fs.existsSync(filePath)){ res.status(404).send(); return }
 
     fs.readdir(filePath, (err, files) => {
+        if (files.length == 0) { res.status(404).send(); return }
+
         var recordedMessages = []
         
         var cbCalls = 0;
