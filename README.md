@@ -9,7 +9,7 @@ How-to:
   - After installing NodeJS run start.bat if you are on Windows or start.sh if you are on Linux
   - After setting up the File Uploader Server, update the ip in the config (zth_gcphone/html/static/config.json):
     "fileUploader": {
-      "ip": "INSER FILE UPLOADER SERVER IP"
+      "ip": "TYPE_YOUR_SERVER_IP_HERE"
     }
 
 Debug:
