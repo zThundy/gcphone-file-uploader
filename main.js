@@ -168,7 +168,7 @@ app.get("/getAvailabledRecordedMessages", (req, res) => {
 })
 
 app.post("/recordedMessageDelete", upload.any(), (req, res) => {
-    console.log("Received new recoreded message delete request, analyzing...", req.body)
+    console.log("Received new recorded message delete request, analyzing...")
     var filePath = PATH.format("voicemails_messages")
     if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
     filePath += '/' + req.body.voicemail_target
@@ -182,27 +182,19 @@ app.post("/recordedMessageDelete", upload.any(), (req, res) => {
             }
         })
 
-        var cbCalls = 0;
-        let cb = function() {
-            if (++cbCalls == files.length) {
-                files.forEach(file => {
-                    var oldPath = filePath + "/" + file;
-                    var newPath = filePath + "/" + file.substring(14, file.length);
-                    console.log('Renamed file', file, 'with new path: ' + newPath);
-                    fs.rename(oldPath, newPath, (err) => {
-                        if (err) throw err;
-                    })
-                })
-            }
-        }
-
         var count = 0
         files.forEach(file => {
             var newPath = 'FIXING_INDEXES' + count + file.substring(file.indexOf('_'), file.length);
             files[files.indexOf(file)] = newPath
-            fs.rename(filePath + "/" + file, filePath + "/" + newPath, (err) => {})
+            fs.renameSync(filePath + "/" + file, filePath + "/" + newPath, (err) => {})
             count++
-            cb()
+        })
+
+        files.forEach(file => {
+            var oldPath = filePath + "/" + file;
+            var newPath = filePath + "/" + file.substring(14, file.length);
+            // console.log('Renamed file', file, 'old path:', oldPath, 'with new path: ' + newPath);
+            fs.renameSync(oldPath, newPath, (err) => {})
         })
 
         res.status(200).send();
