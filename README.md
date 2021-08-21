@@ -8,12 +8,14 @@ Requirements:
 How-to:
   - After installing NodeJS run start.bat if you are on Windows or start.sh if you are on Linux
   - After setting up the File Uploader Server, update the ip in the config (zth_gcphone/html/static/config.json):
+  ```json
     "fileUploader": {
       "ip": "TYPE_YOUR_SERVER_IP_HERE"
     }
+  ```
 
 Debug:
-  - To check if the File Uploader Server is running go to http://<uploaderServerIp>:3000/
+  - To check if the File Uploader Server is running go to `http://<uploaderServerIp>:3000/`
 
 # Discord
 For info about the main resource join this discord: https://discord.gg/VABdfWEPAR
