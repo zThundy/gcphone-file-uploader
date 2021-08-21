@@ -1,11 +1,11 @@
 # gcphone-file-uploader
 File uploader for audio and videos for zth_gcphone
 
-Requirements:
+## Requirements:
   - NodeJS (version: 14+)
   - Open TCP port 3000 on the firewall
 
-How-to:
+## How-to:
   - After installing NodeJS run start.bat if you are on Windows or start.sh if you are on Linux
   - After setting up the File Uploader Server, update the ip in the config (zth_gcphone/html/static/config.json):
   ```json
@@ -14,7 +14,7 @@ How-to:
     }
   ```
 
-Debug:
+## Debug:
   - To check if the File Uploader Server is running go to `http://<uploaderServerIp>:3000/`
 
 # Discord
