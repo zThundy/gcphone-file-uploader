@@ -1,12 +1,11 @@
-const express = require("express");
+const app = require("express")();
 const fs = require("fs");
 const bodyParser = require("body-parser");
-const multer = require('multer');
-const upload = multer();
+const upload = require('multer')();
 
-const app = express()
 const PORT = 3000
-var PATH = "./audios/{0}"
+const AUDIO_PATH = "./_audios/{0}"
+const VIDEO_PATH = "./_videos/{0}"
 
 if (!String.prototype.format) {
     String.prototype.format = function () {
@@ -29,10 +28,10 @@ app.use((req, res, next) => {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Gestione Segreterie
+// Gestione video
 
-app.post("/audioUpload", upload.any(), (req, res) => {
-    console.log("Received new upload request, analyzing...")
+app.post("/videoUpload", upload.any(), (req, res) => {
+    console.log("Received new video upload request, analyzing...")
     var remotePath = req.body.type
     if (!remotePath) {
         console.log("Type param was empty, sending error 500")
@@ -40,7 +39,64 @@ app.post("/audioUpload", upload.any(), (req, res) => {
         res.end();
         return
     }
-    var filePath = PATH.format(remotePath)
+    var filePath = VIDEO_PATH.format(remotePath)
+    if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
+    filePath += "/" + req.body.filename
+    if (fs.existsSync(filePath)) { fs.unlinkSync(filePath) }
+    console.log("File at path " + filePath + " has been deleted")
+
+    if (req.files[0]) {
+        console.log("Buffer found. Trying on saving it...")
+        var file = req.files[0].buffer 
+
+        fs.writeFile(filePath, file, (err) => {
+            if (err) return console.err(err)
+            console.log("File saved successfully! New key: " + req.body.filename)
+        })
+        res.status(200).send();
+        res.end();
+    } else {
+        console.log("No file nor buffer where sent. Rejecting request")
+        res.status(500).send();
+        res.end();
+    }
+})
+
+app.get("/videoDownload", (req, res) => {
+    var remotePath = req.query.type
+    if (!remotePath) {
+        res.status(500).send();
+        res.end();
+        return
+    }
+    var filePath = VIDEO_PATH.format(remotePath)
+    filePath += "/" + req.query.key
+
+    if (fs.existsSync(filePath)) {
+        fs.readFile(filePath, (err, data) => {
+            if (err) return console.err(err)
+            console.log('Found audio file! Sending to client')
+            res.json({"blobDataBuffer": data.toString('base64')});
+            res.end();
+        })
+    } else {
+        console.log('No file exists, sending 404')
+        res.status(404).send()
+    }
+})
+
+// Gestione Segreterie
+
+app.post("/audioUpload", upload.any(), (req, res) => {
+    console.log("Received new audio upload request, analyzing...")
+    var remotePath = req.body.type
+    if (!remotePath) {
+        console.log("Type param was empty, sending error 500")
+        res.status(500).send();
+        res.end();
+        return
+    }
+    var filePath = AUDIO_PATH.format(remotePath)
     if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
     if (remotePath === "voicemails_messages") {
         filePath += "/" + req.body.voicemail_target
@@ -73,7 +129,7 @@ app.get("/audioDownload", (req, res) => {
         res.end();
         return
     }
-    var filePath = PATH.format(remotePath)
+    var filePath = AUDIO_PATH.format(remotePath)
     filePath += "/" + req.query.key
 
     if (fs.existsSync(filePath)) {
@@ -100,7 +156,7 @@ app.post("/recordedMessageUpload", upload.any(), (req, res) => {
         res.end();
         return
     }
-    var filePath = PATH.format('voicemails_messages')
+    var filePath = AUDIO_PATH.format('voicemails_messages')
     if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
     filePath += "/" + req.body.voicemail_target
     if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
@@ -131,15 +187,12 @@ app.get("/getAvailabledRecordedMessages", (req, res) => {
         res.end();
         return
     }
-    var filePath = PATH.format("voicemails_messages/" + remotePath)
-    console.log('filePath', filePath)
+    var filePath = AUDIO_PATH.format("voicemails_messages/" + remotePath)
     if (!fs.existsSync(filePath)){ res.status(404).send(); return }
 
     fs.readdir(filePath, (err, files) => {
         if (files.length == 0) { res.status(404).send(); return }
-
         var recordedMessages = []
-        
         var cbCalls = 0;
         let cb = function() {
             if (++cbCalls == files.length) {
@@ -169,7 +222,7 @@ app.get("/getAvailabledRecordedMessages", (req, res) => {
 
 app.post("/recordedMessageDelete", upload.any(), (req, res) => {
     console.log("Received new recorded message delete request, analyzing...")
-    var filePath = PATH.format("voicemails_messages")
+    var filePath = AUDIO_PATH.format("voicemails_messages")
     if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
     filePath += '/' + req.body.voicemail_target
     if (!fs.existsSync(filePath)){ fs.mkdirSync(filePath) }
@@ -193,7 +246,6 @@ app.post("/recordedMessageDelete", upload.any(), (req, res) => {
         files.forEach(file => {
             var oldPath = filePath + "/" + file;
             var newPath = filePath + "/" + file.substring(14, file.length);
-            // console.log('Renamed file', file, 'old path:', oldPath, 'with new path: ' + newPath);
             fs.renameSync(oldPath, newPath, (err) => {})
         })
 
@@ -209,7 +261,6 @@ function removeElementAtIndex(array, index) {
             tempArray.push(elem)
         }
     })
-
     return tempArray
 }
 
