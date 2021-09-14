@@ -75,7 +75,7 @@ app.get("/videoDownload", (req, res) => {
     if (fs.existsSync(filePath)) {
         fs.readFile(filePath, (err, data) => {
             if (err) return console.err(err)
-            console.log('Found audio file! Sending to client')
+            console.log('Found video file! Sending to client')
             res.json({"blobDataBuffer": data.toString('base64')});
             res.end();
         })
