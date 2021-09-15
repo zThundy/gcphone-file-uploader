@@ -63,6 +63,7 @@ app.post("/videoUpload", upload.any(), (req, res) => {
 })
 
 app.get("/videoDownload", (req, res) => {
+    console.log("Trying downloading of video file with key " + req.query.key)
     var remotePath = req.query.type
     if (!remotePath) {
         res.status(500).send();
@@ -71,7 +72,6 @@ app.get("/videoDownload", (req, res) => {
     }
     var filePath = VIDEO_PATH.format(remotePath)
     filePath += "/" + req.query.key
-
     if (fs.existsSync(filePath)) {
         fs.readFile(filePath, (err, data) => {
             if (err) return console.err(err)
@@ -123,6 +123,7 @@ app.post("/audioUpload", upload.any(), (req, res) => {
 })
 
 app.get("/audioDownload", (req, res) => {
+    console.log("Trying downloading of audio file with key " + req.query.key)
     var remotePath = req.query.type
     if (!remotePath) {
         res.status(500).send();
@@ -131,7 +132,6 @@ app.get("/audioDownload", (req, res) => {
     }
     var filePath = AUDIO_PATH.format(remotePath)
     filePath += "/" + req.query.key
-
     if (fs.existsSync(filePath)) {
         fs.readFile(filePath, (err, data) => {
             if (err) return console.err(err)
