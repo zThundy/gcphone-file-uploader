@@ -1,12 +1,12 @@
 {
-  "name": "file-saver",
+  "name": "gcphone-file-saver",
   "version": "1.0.0",
-  "description": "",
+  "author": "zThundy__",
+  "description": "A cusotom node webserver created for handling audio and video file saving",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.19.0",
