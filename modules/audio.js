@@ -112,14 +112,11 @@ class AudioUploader {
                 var cbCalls = 0;
                 let cb = function() {
                     if (++cbCalls == files.length) {
-                        recordedMessages.sort(function(a, b) {
-                            return a.id - b.id; });
+                        recordedMessages.sort(function(a, b) { return a.id - b.id; });
                         if (recordedMessages.length > 0) {
                             res.json(recordedMessages);
                             res.end();
-                            this.logSuccess('Sent recorded messages');
                         } else {
-                            this.logError('No file exists, sending 404');
                             res.status(404).send();
                             res.end();
                         }
